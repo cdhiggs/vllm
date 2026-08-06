@@ -7396,10 +7396,13 @@ class GPUModelRunner(
                         shape_block_size = kernel_block_size
 
                     # Skipped layers (--kv-cache-dtype-skip-layers) need
-                    # the unquantized shape.
+                    # the unquantized shape. TQFullAttentionSpec has a packed
+                    # layout even though it does not use the generic KV quant
+                    # modes, so keep the TurboQuant dtype for its shape.
                     layer_cache_dtype_str = (
                         "auto"
                         if kv_cache_spec.kv_quant_mode == KVQuantMode.NONE
+                        and not isinstance(kv_cache_spec, TQFullAttentionSpec)                        
                         else getattr(
                             kv_cache_spec,
                             "cache_dtype_str",

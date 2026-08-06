@@ -129,7 +129,7 @@ def _resolve_gptq_moe(layer: "torch.nn.Module", layer_config: "INCLayerConfig"):
     use_marlin = (layer_config.bits, layer_config.sym) in {
         (4, True),
         (8, True),
-    } and check_moe_marlin_supports_layer(layer, layer_config.group_size)
+    } and not current_platform.is_xpu()
 
     if use_marlin:
         return AutoGPTQMoEMethod(

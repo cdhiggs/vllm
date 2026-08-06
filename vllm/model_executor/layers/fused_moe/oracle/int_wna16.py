@@ -1577,6 +1577,25 @@ def convert_to_wna16_moe_kernel_format(
         )
     elif backend == WNA16MoEBackend.XPU:
         assert quant_config is not None
+        
+        from vllm.model_executor.layers.quantization.moe_wna16 import (                                                                                              
+            MoeWNA16Config,                                                                                                                                          
+        )                                                                                                                                                            
+                                                                                                                                                                       
+        if isinstance(quant_config, MoeWNA16Config):                                                                                                                 
+            # MoeWNA16 registers weights and scales already in the XPU                                                                                               
+            # kernel's N-first layout (w13 [E, 2N, K//2] uint8, scales                                                                                               
+            # [E, 2N, K//group_size]); _process_weights_xpu expects the                                                                                              
+            # GPTQ K-first layout and would flip them.                                                                                                               
+            empty = torch.empty((0,), dtype=torch.int32, device=w13.device)                                                                                          
+            return (                                                                                                                                                 
+                w13, w2, w13_scale, w2_scale,                                                                                                                        
+                empty, empty, empty, empty,       # g_idx / sort_indices                                                                                             
+                w13_qzeros, w2_qzeros,                                                                                                                               
+                None, None,                        # input_global_scales                                                                                             
+                w13_bias, w2_bias,                                                                                                                                   
+            )
+
         (
             w13_xpu,
             w2_xpu,
